@@ -55,17 +55,17 @@ def setup_argparse():
     parser.add_argument('--model_type', type=str, default='AlphaFold2-multimer-v3', choices=['AlphaFold2-ptm', 'AlphaFold2-multimer-v3', 'auto'], help='Type of AlphaFold model to use.')
     parser.add_argument('--num_models', type=int, default=5, help='Number of models to run. Initial guess/AlphaFold2-ptm could do 2, Initial guess/AAlphaFold2-multimer-v3 could do all 5,')
     parser.add_argument('--model_order', type=lambda s: [int(item) for item in s.split(',')], default=[1,2,3,4,5], help='Which models to run, from 1 to 5 (comma-separated list)')    
-    parser.add_argument('--num_recycles', type=int, default=3, help='Number of recycles to use in AlphaFold prediction (default of 2 = 3 total cycles).')
+    parser.add_argument('--num_recycles', type=int, default=20, help='Number of recycles to use in AlphaFold prediction (default of 2 = 3 total cycles).')
     parser.add_argument('--is_monomer', action='store_false', dest="is_complex", help='Set this flag if predicting a monomer. This may not be properly implemented')
     parser.add_argument('--template_mode', type=str, default='none', choices=['none', 'pdb100', 'custom'], help='Template mode for structure prediction; dont use, initial guess would override this.')
     parser.add_argument('--use_templates', action='store_true', help='Set this flag if you want to use templates; dont use, initial guess would override this.')
     parser.add_argument('--custom_template_path', type=str, default=None, help='path to custom templates; currently not implemented')
-    parser.add_argument('--recycle_early_stop_tolerance', type=float, default=0.05, help='early stop if distograms converge')
+    parser.add_argument('--recycle_early_stop_tolerance', type=float, default=0.5, help='early stop if distograms converge')
     parser.add_argument('--pae_interaction_cut', type=float, default=29, help='stop predictions early if pae_interaction is this bad')
     parser.add_argument('--interface_rmsd_cut', type=float, default=20, help='stop predictions early if interface_rmsd is this bad')
     parser.add_argument('--do_not_template_chain_2_plus', action='store_false', dest="template_chain_2_plus", help='trun off templating for chain 2 or higher, ie target')
     parser.add_argument('--template_chain_1', action='store_true', help='Set this flag if you want to turn on templating for chain 1, ie binder')
-
+    parser.add_argument('--no_initial_guess', action='store_true', help='Set this flag if initial guess is not needed')
     return parser.parse_args()
 
 def main():
@@ -73,6 +73,8 @@ def main():
 
     args = setup_argparse()
     validate_args(args)
+
+    
 
     try:
         model_type = set_model_type(args.is_complex, args.model_type)
@@ -91,7 +93,7 @@ def main():
             use_dropout=False, #only useful with more seeds
             model_order=args.model_order,
             is_complex=args.is_complex,
-            data_dir=Path("/net/databases/alphafold/"),
+            data_dir=Path(os.environ['LOGOS_PATH']),
             pair_mode=args.pair_mode,
             pairing_strategy=args.pairing_strategy,
             max_msa=None,
@@ -105,6 +107,7 @@ def main():
             interface_rmsd_cut=args.interface_rmsd_cut,
             recompile_padding=0,
             outname=args.outname,
+            no_initial_guess=args.no_initial_guess
         )
 
     except Exception as e:

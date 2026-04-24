@@ -7,7 +7,7 @@ IncludeCmd: yes
 %files
   /etc/localtime
   /etc/apt/sources.list
-  /archive/software/Miniconda3-latest-Linux-x86_64.sh /opt/miniconda.sh
+  /storage/d1/users/ruizhi/softwares/Miniconda3-latest-Linux-x86_64.sh /opt/miniconda.sh
 
 %post
     # Update the package list and install basic dependencies
@@ -16,7 +16,9 @@ IncludeCmd: yes
     # Install Miniconda
     bash /opt/miniconda.sh -b -u -p /usr
     rm /opt/miniconda.sh
-
+  
+  /usr/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+  /usr/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
   /usr/bin/conda install -c conda-forge mamba -y
   mamba install python=3.11 prody pip tensorflow pytorch numpy scipy numba biopython ipython pandas matplotlib ipykernel seaborn modelcif -c conda-forge -c pytorch
 

@@ -13,7 +13,7 @@ import hashlib
 
 # Don't throw an error when someone uses head
 from signal import signal, SIGPIPE, SIG_DFL
-signal(SIGPIPE, SIG_DFL)
+signal(SIGPIPE, SIG_DFL) 
 
 if (len(sys.argv) != 3):
     eprint("")
@@ -49,54 +49,47 @@ def get_split_str(width, number):
 
 def get_split_str2(number):
     for width in range(2, 10000):
-        this_num = 26**(width-1) * 25
+        this_num = 26**(width-1) * 25 
         if ( number < this_num ):
             return get_split_str(width, number)
         number -= this_num
 
 def get_length_seq_hash_str(structure):
     seqs = silent_tools.get_sequence_chunks(structure)
-    if seqs is None:
-        eprint(f"WARNING: get_sequence_chunks returned None")
-        return None
     binder_seq = seqs[0]
     target_seq = "".join(seqs[1:])
     target_hash = hashlib.sha256(target_seq.encode()).hexdigest()[:10]  # First 10 characters of the hash
     return f"{len(binder_seq)}_{target_hash}"
 
-def get_filename(identifier, idx):
-    return f"len_{identifier}_{idx}.silent"
+def newfile(identifier, idx):
+    f = open(f"len_{identifier}_{idx}.silent", "w")
+    f.write(silent_tools.silent_header(silent_index))
+    return f
 
-def create_new_file(identifier, idx):
-    filename = get_filename(identifier, idx)
-    eprint(f"Creating file: {filename}")
-    with open(filename, "w") as f:
-        f.write(silent_tools.silent_header(silent_index))
+def open_new_file(file_dict, identifier):
+    if identifier in file_dict:
+        currfile, _, idx = file_dict[identifier]
+        currfile.close()
+        idx += 1
+    else:
+        idx = 0
+
+    currfile = newfile(identifier, idx)
+    file_dict[identifier] = [currfile, 0, idx]
 
 def add_to_file(structure, identifier, file_dict):
-    if identifier is None:
-        eprint(f"WARNING: Skipping structure with None identifier")
-        return
+    if identifier in file_dict:
+        if file_dict[identifier][1] >= tags_per:
+            open_new_file(file_dict, identifier)
+            file_dict[identifier][0].write(structure)
+            file_dict[identifier][1] += 1
+            return
 
-    # Check if we need to create a new file for this identifier
-    if identifier not in file_dict:
-        # First time seeing this identifier
-        file_dict[identifier] = [0, 0]  # [count_in_current_file, file_index]
-        create_new_file(identifier, 0)
+    else:
+        open_new_file(file_dict, identifier)
 
-    # Check if current file is full
-    if file_dict[identifier][0] >= tags_per:
-        # Move to next file
-        file_dict[identifier][1] += 1
-        file_dict[identifier][0] = 0
-        create_new_file(identifier, file_dict[identifier][1])
-
-    # Append structure to current file (open, write, close)
-    filename = get_filename(identifier, file_dict[identifier][1])
-    with open(filename, "a") as f:
-        f.write(structure)
-
-    file_dict[identifier][0] += 1
+    file_dict[identifier][0].write(structure)
+    file_dict[identifier][1] += 1
 
 
 open_silent_file = open( silent_file )
@@ -112,7 +105,7 @@ while cur_struct < total_structures:
     if ( cur_struct + seek_size > total_structures ):
         seek_size = total_structures - cur_struct
 
-    structures = silent_tools.get_silent_structures_true_slice( open_silent_file,
+    structures = silent_tools.get_silent_structures_true_slice( open_silent_file, 
                         silent_index, cur_struct, cur_struct+seek_size, True )
 
     for structure in structures:
@@ -124,10 +117,6 @@ while cur_struct < total_structures:
 
 open_silent_file.close()
 
-# Count total files created
-total_files = sum(file_dict[k][1] + 1 for k in file_dict)
+for f in file_dict:
+    file_dict[f][0].close()
 
-eprint(f"\nSummary:")
-eprint(f"  Total structures processed: {total_structures}")
-eprint(f"  Unique identifiers: {len(file_dict)}")
-eprint(f"  Files created: {total_files}")

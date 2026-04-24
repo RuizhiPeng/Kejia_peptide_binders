@@ -12,6 +12,7 @@ sys.path.append(os.path.dirname(distutils.spawn.find_executable("silent_tools.py
 import silent_tools
 import re
 from silent_tools import eprint
+logos_path = os.environ['LOGOS_PATH']
 
 def my_rstrip(string, strip):
     if (string.endswith(strip)):
@@ -155,13 +156,13 @@ cmd( "mkdir splits" )
 os.chdir( 'splits' )
 
 # Let's just use sequence outputs
-cmd( f'/home/drhicks1/scripts/Kejia_peptide_binders/silent_tools/silentsplittargetseq {silent} {structs_per_job}' )
+cmd( f'{logos_path}silent_tools/silentsplittargetseq {silent} {structs_per_job}' )
 
 commands = []
 for x in glob.glob("len*.silent"):
     full_x = os.path.join(commands_path,'splits', x)
     dirname = my_rstrip( x, ".silent" )
-    commands.append( "cd {runs_path}; mkdir {dirname}; cd {dirname}; apptainer exec -B /home/$USER/ -B /mnt/home/$USER/ -B /mnt/net/scratch/$USER/ -B /net/scratch/$USER/ --nv {args.apptainer} python {script_filename} -silent {full_x} {args_string} > log.log 2>&1".format(**locals()) )
+    commands.append( "cd {runs_path}; mkdir {dirname}; cd {dirname}; apptainer exec -B $LOGOS_JOB_PATH  --nv {args.apptainer} python {script_filename} -silent {full_x} {args_string} > log.log 2>&1".format(**locals()) )
 
 os.chdir( commands_path )
 with open("commands.list", "w") as f:
@@ -173,10 +174,10 @@ test_command = commands[0][ : -len( '> log.log 2>&1' ) ]
 
 os.chdir( total_path )
 
-assert( os.path.exists("/home/drhicks1/scripts/Kejia_peptide_binders/job_creation/split_commands.py") ), \
-"/home/drhicks1/scripts/Kejia_peptide_binders/job_creation/split_commands.py path does not exist"
+assert( os.path.exists(f"{logos_path}job_creation/split_commands.py") ), \
+f"{logos_path}job_creation/split_commands.py path does not exist"
 
-retval = cmd( "python2 /home/drhicks1/scripts/Kejia_peptide_binders/job_creation/split_commands.py %s_commands/commands.list %s_commands %i %i %i %s"%(prefix, prefix, group_size, mem, cpus, prefix) )
+retval = cmd( f"python2 {logos_path}job_creation/split_commands.py %s_commands/commands.list %s_commands %i %i %i %s"%(prefix, prefix, group_size, mem, cpus, prefix) )
 
 # print( retval )
 

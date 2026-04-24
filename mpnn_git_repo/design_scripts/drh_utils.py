@@ -28,8 +28,9 @@ def N_to_AA(x):
   if x.ndim == 1: x = x[None]
   return ["".join([aa_N_1.get(a,"-") for a in y]) for y in x]
 
+logos_path = os.environ['LOGOS_PATH']
 
-xml = """<ROSETTASCRIPTS>
+xml = f"""<ROSETTASCRIPTS>
     <SCOREFXNS>
         <ScoreFunction name="sfxn" weights="beta_nov16" >
         </ScoreFunction>
@@ -183,7 +184,7 @@ xml = """<ROSETTASCRIPTS>
         <AddSapConstraintMover name="add_sap" speed="lightning" sap_goal="0" penalty_per_sap="0.5" score_selector="true_sel" sap_calculate_selector="true_sel" />
         <PackRotamersMover name="redesign_bad_sap" scorefxn="sfxn_design"
             task_operations="precompute_ig,limitchi2,ex1_ex2,only_surface,disallow_GLY,disallow_PRO,not_core,restrict_PRO_GLY,layer_design_no_core_polars,restrict_not_bad_sap,restrict_target_not_interface,restrict_target2repacking"/> 
-        <AddNetChargeConstraintMover name="netcharge_cst" filename="/home/drhicks1/scripts/proteinmpnn/design_scripts/netcharge" selector="true_sel" />
+        <AddNetChargeConstraintMover name="netcharge_cst" filename="{logos_path}mpnn_git_repo/design_scripts/netcharge" selector="true_sel" />
     </MOVERS>
     <APPLY_TO_POSE>
     </APPLY_TO_POSE>

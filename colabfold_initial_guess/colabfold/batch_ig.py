@@ -1120,6 +1120,7 @@ def run_ig(
     template_chain_1=False,
     template_chain_2_plus=True,
     outname: str = "out",
+    no_initial_guess = False,
     **kwargs
 ):
     # check what device is available
@@ -1193,6 +1194,7 @@ def run_ig(
     finished_structs = af2_util.determine_finished_structs(checkpoint_filename)
 
     #DRH
+    
     queries = af2_util.get_queries_from_silent(initial_guess)
     # Sorting the list
     # The key for sorting is a tuple with two elements:
@@ -1204,6 +1206,7 @@ def run_ig(
     #queries.sort(key=lambda t: (len("".join(t[1])), t[0]))
     sfd_in = pyrosetta.rosetta.core.io.silent.SilentFileData(pyrosetta.rosetta.core.io.silent.SilentFileOptions())
     sfd_in.read_file(initial_guess)
+    
     #DRH
 
     # get max length
@@ -1304,7 +1307,7 @@ def run_ig(
         all_atom_positions, all_atom_masks = af2_util.af2_get_atom_positions(pose)
         if all_atom_positions is None:
             print(f"Skipping {raw_jobname} due to duplicate residue numbers.")
-            continue  # Skip to the next PDB file
+            continue  # Skip to the next PDB file       
         this_initial_guess = af2_util.parse_initial_guess(all_atom_positions)
         #DRH
 
@@ -1458,6 +1461,8 @@ def run_ig(
                         save_all=save_all,
                     )
                     first_job = False
+                if no_initial_guess:
+                    this_initial_guess = None
 
                 af2_pdbs, score_dicts, model_tags = predict_structure(
                     prefix=jobname,

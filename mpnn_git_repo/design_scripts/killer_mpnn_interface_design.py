@@ -8,6 +8,8 @@ import numpy as np
 import pyrosetta
 from pyrosetta.rosetta.std import ostringstream
 
+
+logos_path = os.environ['LOGOS_PATH']
 # Initialize PyRosetta
 PYROSETTA_OPTIONS = "-mute all -beta_nov16 -in:file:silent_struct_type binary" \
     " -use_terminal_residues true -precompute_ig" \
@@ -18,8 +20,8 @@ PYROSETTA_OPTIONS = "-mute all -beta_nov16 -in:file:silent_struct_type binary" \
 pyrosetta.init(PYROSETTA_OPTIONS)
 
 # Add paths
-sys.path.insert(0, '/home/drhicks1/scripts/Kejia_peptide_binders/mpnn_git_repo/proteinMPNN/')
-
+sys.path.insert(0, os.path.join(logos_path, "mpnn_git_repo", "proteinMPNN"))
+sys.path.insert(0, os.path.join(logos_path, "mpnn_git_repo", "design_scripts"))
 import protein_mpnn_run_HACK as mpnn_util
 from drh_utils import (xml,
     get_sap,
@@ -37,14 +39,14 @@ from drh_utils import (xml,
     tied_positions,
     fixed_positions)
 
-sys.path.append('/home/drhicks1/silent_tools')
+sys.path.append(os.path.join(logos_path, "silent_tools"))
 import silent_tools
 
 
 argparser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
 argparser.add_argument("--checkpoint_path", type=str, default="", help="Path to the model checkpoint")
-argparser.add_argument("--path_to_model_weights", type=str, default="/databases/mpnn/vanilla_model_weights/", help="Path to model weights folder;")
+argparser.add_argument("--path_to_model_weights", type=str, default="/storage/d1/users/ruizhi/mpnn/ProteinMPNN/vanilla_model_weights", help="Path to model weights folder;")
 argparser.add_argument("--model_name", type=str, default="v_48_020", help="ProteinMPNN model name: v_48_002, v_48_010, v_48_020, v_48_030, v_32_002, v_32_010; v_32_020, v_32_030")
 
 argparser.add_argument("--use_seed", type=int, default=0, help="0 for False, 1 for True; To set global seed.")
@@ -81,7 +83,7 @@ argparser.add_argument("--jsonl_path", type=str, help="Path to a folder with par
 argparser.add_argument("--chain_id_jsonl",type=str, default='', help="Path to a dictionary specifying which chains need to be designed and which ones are fixed, if not specied all chains will be designed.")
 argparser.add_argument("--fixed_positions_jsonl", type=str, default='', help="Path to a dictionary with fixed positions")
 argparser.add_argument("--omit_AAs", type=list, default='CX', help="Specify which amino acids should be omitted in the generated sequence, e.g. 'AC' would omit alanine and cystine.")
-argparser.add_argument("--bias_AA_jsonl", type=str, default='/home/drhicks1/scripts/mpnn_git_repo/design_scripts/bias_AA_sap.jsonl', help="Path to a dictionary which specifies AA composion bias if needed, e.g. {A: -1.1, F: 0.7} would make A less likely and F more likely.")
+argparser.add_argument("--bias_AA_jsonl", type=str, default=f'{logos_path}mpnn_git_repo/design_scripts/bias_AA_sap.jsonl', help="Path to a dictionary which specifies AA composion bias if needed, e.g. {A: -1.1, F: 0.7} would make A less likely and F more likely.")
 
 argparser.add_argument("--bias_by_res_jsonl", default='', help="Path to dictionary with per position bias.")
 argparser.add_argument("--omit_AA_jsonl", type=str, default='', help="Path to a dictionary which specifies which amino acids need to be omited from design at specific chain indices")

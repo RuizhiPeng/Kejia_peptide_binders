@@ -6,18 +6,19 @@ IncludeCmd: yes
 %setup
     # Create directories for Python packages
     mkdir -p $APPTAINER_ROOTFS/apptainer_python_packages/
-    cp -r /home/$USER/silent_tools/ $APPTAINER_ROOTFS/apptainer_python_packages/
+    cp -r ${LOGOS_PATH%/}/silent_tools $APPTAINER_ROOTFS/apptainer_python_packages/
 
     # Rsync CUDA 12.0 files (handle existing directories)
-    rsync -a --ignore-existing --no-o --no-g /usr/local/cuda-12.0/lib64/ $APPTAINER_ROOTFS/usr/lib/x86_64-linux-gnu/
-    rsync -a --ignore-existing --no-o --no-g /usr/local/cuda-12.0/bin/ $APPTAINER_ROOTFS/usr/bin/
+    CUDA_PATH=$(dirname $(dirname $(which nvcc)))
+    rsync -a --ignore-existing --no-o --no-g $CUDA_PATH/lib64/ $APPTAINER_ROOTFS/usr/lib/x86_64-linux-gnu/
+    rsync -a --ignore-existing --no-o --no-g $CUDA_PATH/bin/ $APPTAINER_ROOTFS/usr/bin/
 
     cp /usr/local/cuda/bin/ptxas $APPTAINER_ROOTFS/apptainer_python_packages/
 
 %files
     /etc/localtime
     /etc/apt/sources.list
-    /archive/software/Miniconda3-latest-Linux-x86_64.sh /opt/miniconda.sh
+    /storage/d1/users/ruizhi/softwares/Miniconda3-latest-Linux-x86_64.sh /opt/miniconda.sh
 
 %post
     # Update the package list and install basic dependencies
@@ -27,6 +28,8 @@ IncludeCmd: yes
     bash /opt/miniconda.sh -b -u -p /usr
     rm /opt/miniconda.sh
 
+    /usr/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+	/usr/bin/conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
     # Install Mamba (via conda-forge channel)
     /usr/bin/conda install -n base -c conda-forge mamba -y
 
@@ -48,11 +51,13 @@ IncludeCmd: yes
 %environment
     # Add CUDA 12.0 and Mamba environment to the PATH
     export PATH=/usr/local/cuda-12.0/bin:/usr/envs/colabfold_ig/bin:$PATH
+	export PYTHONPATH=/apptainer_python_packages/:$PYTHONPATH
     export LD_LIBRARY_PATH=/usr/local/cuda-12.0/lib64:$LD_LIBRARY_PATH
     export CUDA_HOME=/usr/local/cuda-12.0
     export XLA_PYTHON_CLIENT_PREALLOCATE=false
     export XLA_PYTHON_CLIENT_MEM_FRACTION=0.9
     export TF_FORCE_GPU_ALLOW_GROWTH=true
+	
 
 %runscript
     python "$@"

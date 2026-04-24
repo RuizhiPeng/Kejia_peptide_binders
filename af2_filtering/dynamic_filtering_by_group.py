@@ -7,6 +7,8 @@ from Bio.SeqUtils import molecular_weight
 import subprocess
 import numpy as np
 
+logos_path = os.environ['LOGOS_PATH']
+sys.path.append(os.path.join(logos_path))
 try:
     from silent_tools import silent_tools
 except ImportError:
@@ -28,7 +30,7 @@ def run_mmseqs2_easy_cluster(fasta_file, output_prefix, min_id=0.5, max_id=0.99,
 
     while attempts < max_attempts and min_id <= max_id:
         cluster_value = (min_id + max_id) / 2
-        subprocess.run(['/software/mmseqs2/bin/mmseqs', 'easy-cluster', fasta_file, output_prefix, 'tmp', '--min-seq-id', str(cluster_value), '-s', '5.7'])
+        subprocess.run(['mmseqs', 'easy-cluster', fasta_file, output_prefix, 'tmp', '--min-seq-id', str(cluster_value), '-s', '5.7'])
         
         result = subprocess.run(['wc', '-l', rep_file], stdout=subprocess.PIPE, text=True)
         line_count = int(result.stdout.split()[0])
@@ -314,8 +316,8 @@ def main():
     parser.add_argument("--initial_iptm", type=float, default=0.88, help="Initial minimum threshold for iptm.")
     parser.add_argument("--initial_interface_rmsd", type=float, default=1.5, help="Initial maximum threshold for interface_rmsd.")
     parser.add_argument("--initial_plddt_binder", type=float, default=90.0, help="Initial minimum threshold for plddt_binder.")
-    parser.add_argument("--worst_iptm", type=float, default=0.83, help="Maximum allowable threshold for iptm.")
-    parser.add_argument("--worst_interface_rmsd", type=float, default=2.0, help="Maximum allowable threshold for interface_rmsd.")
+    parser.add_argument("--worst_iptm", type=float, default=0.80, help="Maximum allowable threshold for iptm.")
+    parser.add_argument("--worst_interface_rmsd", type=float, default=3.0, help="Maximum allowable threshold for interface_rmsd.")
     parser.add_argument("--worst_plddt_binder", type=float, default=85.0, help="Minimum allowable threshold for plddt_binder.")
     parser.add_argument("--n_examples", type=int, default=1, help="Desired number of output per cluster")
     parser.add_argument("--abs_cut", type=float, default=0, help="minimum acceptable Abs_0.1 value so you can use A280")

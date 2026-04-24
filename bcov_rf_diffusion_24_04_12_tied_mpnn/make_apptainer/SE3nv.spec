@@ -3,13 +3,13 @@ From: ubuntu
 IncludeCmd: yes
 
 %setup
-rsync -a --no-g --no-o /home/drhicks1/scripts/Kejia_peptide_binders/bcov_rf_diffusion_24_04_12_tied_mpnn/SE3Transformer/ $APPTAINER_ROOTFS/SE3Transformer/
+rsync -a --no-g --no-o ${LOGOS_PATH%/}/bcov_rf_diffusion_24_04_12_tied_mpnn/SE3Transformer/ $APPTAINER_ROOTFS/SE3Transformer/
 
 %files
 /etc/localtime
 /etc/hosts
 /etc/apt/sources.list
-/archive/software/Miniconda3-latest-Linux-x86_64.sh /opt/miniconda.sh
+/storage/d1/users/ruizhi/softwares/Miniconda3-latest-Linux-x86_64.sh /opt/miniconda.sh
 
 %post
 # Switch shell to bash
@@ -35,18 +35,31 @@ bash /opt/miniconda.sh -b -u -p /usr
 # Install conda/pip packages
 # conda update conda
 
-# open-babel
-conda install \
-   -c conda-forge \
-   openbabel
+# Initialize conda for bash
+eval "$(conda shell.bash hook)"
 
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/main
+conda tos accept --override-channels --channel https://repo.anaconda.com/pkgs/r
+
+# Create environment with python 3.9
+CONDA_OVERRIDE_CUDA='12.4' conda create  -n rfdiffusion python=3.9 -y
+
+# Activate the environment
+conda activate rfdiffusion
+
+# open-babel
+conda install  -n rfdiffusion \
+   openbabel \
+   -c conda-forge \
+   --solver=classic \
+   -y
 
 # pytorch + dependancies
-conda install \
+conda install  -n rfdiffusion \
    -c nvidia \
    -c pytorch \
    -c pyg \
-   -c dglteam/label/cu117 \
+   -c dglteam/label/cu124 \
    -c https://conda.rosettacommons.org \
    pip \
    ipython \
@@ -57,11 +70,12 @@ conda install \
    matplotlib \
    jupyterlab \
    pytorch \
-   pytorch-cuda=11.7 \
-   dgl \
+   pytorch-cuda=12.4 \
    pyg \
-   pyrosetta
+   pyrosetta \
+   -y
 
+pip install --no-cache-dir --no-dependencies dgl -f https://data.dgl.ai/wheels/torch-2.4/cu124/repo.html
 # pip extras
 pip install e3nn \
    omegaconf \
@@ -69,10 +83,10 @@ pip install e3nn \
    pyrsistent \
    opt_einsum \
    sympy \
-   omegaconf \
    icecream \
    wandb \
    deepdiff \
+   scikit-learn \
    assertpy
 
 # SE3 transformer
@@ -87,8 +101,13 @@ rm /opt/miniconda.sh
 
 %environment
 export PATH=$PATH:/usr/local/cuda/bin
+# Activate conda environment
+source /usr/etc/profile.d/conda.sh
+conda activate rfdiffusion
 
 %runscript
+source /usr/etc/profile.d/conda.sh
+conda activate rfdiffusion
 exec python "$@"
 
 %help
